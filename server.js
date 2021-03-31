@@ -43,8 +43,9 @@ app.get('/sms', async (req, res) => {
 
 app.get('/call', (req, res) => {
 	const { to } = req.query;
+	const fullUrl = req.protocol + '://' + req.get('host') + '/call';
 
-	makeCall({ url: '/call', to });
+	makeCall({ url: fullUrl, to });
 	res.status(200).send('calling...');
 });
 
@@ -63,7 +64,7 @@ app.post('/call', validateTwilio, async (req, res) => {
 
 app.get('/test', (req, res) => {
 	const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-	console.log(fullUrl);
+	console.log(fullUrl, req.originalUrl);
 	res.send('test');
 });
 
