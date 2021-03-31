@@ -1,28 +1,101 @@
-const http = require('http');
+if (process.env.NODE_ENV !== 'production')
+	require('dotenv').config({ path: './.env' });
+
+// imports
 const express = require('express');
-const { MessagingResponse, VoiceResponse } = require('twilio').twiml;
+const twilioClient = require('twilio');
+
+const {
+	createSmsTwiml,
+	createVoiceTwiml,
+	getSmsMessage,
+} = require('./utils/createTwiml');
+const sendSms = require('./twilio-utils/send_sms');
+// const makeCall = require('./twilio-utils/make_call');
 
 const app = express();
+
+// middlewares
+app.enable('trust proxy');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.post('/sms', (req, res) => {
-	const twiml = new MessagingResponse();
+const validateTwilio = (req, res, next) => {
+	// twilioSignature, reqUrl, reqParams
+	const twilioSignature = req.get('X-Twilio-Signature');
+	const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+	const params = req.body;
+	console.log({
+		auth_token: process.env.TWILIO_AUTH_TOKEN,
+		twilioSignature,
+		fullUrl,
+		params,
+	});
+	if (
+		!twilioClient.validateRequest(
+			process.env.TWILIO_AUTH_TOKEN,
+			twilioSignature,
+			fullUrl,
+			params
+		)
+	) {
+		const err = new Error('Request not from twilio');
+		err.statusCode = 400;
+		next(err);
+	}
 
-	twiml.message('The Robots are coming! Head for the hills!');
+	next();
+};
 
-	res.writeHead(200, { 'Content-Type': 'text/xml' });
-	res.end(twiml.toString());
+// routes
+app.get('/sms', async (req, res) => {
+	const { to } = req.query;
+
+	const { message, imgUrl: mediaUrl } = await getSmsMessage();
+	sendSms({ message, mediaUrl, to });
+	// console.log({ message, mediaUrl, to });
+	res.status(200).send('sms sent');
 });
 
-app.post('/call', (req, res) => {
-	const twiml = new VoiceResponse();
-	twiml.say('Hey folks!! This is PikaPool');
+// app.get('/call', (req, res) => {
+// 	const { to } = req.query;
 
+// 	makeCall({ url: '/call', to });
+// 	res.status(200).send('calling...');
+// });
+
+app.post('/sms', validateTwilio, async (req, res) => {
+	const twimlSms = (await createSmsTwiml()).toString();
 	res.writeHead(200, { 'Content-Type': 'text/xml' });
-	res.end(twiml.toString());
+	res.end(twimlSms);
 });
 
-http.createServer(app).listen(process.env.PORT || 8000, () => {
-	console.log('Express server listening on port ' + process.env.PORT || 8000);
+app.post('/call', validateTwilio, async (req, res) => {
+	console.log('POST - /call');
+	const twimlVoice = (await createVoiceTwiml()).toString();
+	res.writeHead(200, { 'Content-Type': 'text/xml' });
+	res.end(twimlVoice);
+});
+
+app.get('/test', (req, res) => {
+	const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+	console.log(fullUrl);
+	res.send('test');
+});
+
+app.all('*', (req, res) => {
+	res.status(404).send('Invalid route');
+});
+
+// error handler
+app.use((err, req, res, next) => {
+	console.error('err==============================================err', err);
+	res.status(err.statusCode || 500).json(err.message);
+});
+
+// listen
+app.listen(process.env.PORT || 8000, () => {
+	console.log(
+		'Express server listening on port ' + (process.env.PORT || 8000)
+	);
 });
