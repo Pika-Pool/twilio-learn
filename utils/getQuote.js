@@ -52,7 +52,7 @@ const genRandomCategory = async (getFromAllCategories = false) => {
 };
 
 const getQuote = async (getFromAllCategories = false) => {
-	const result = {
+	let result = {
 		quote: `I'm not concerned about all hell breaking loose, but that a PART of hell will break loose.. It'll be much harder to detect.`,
 		imgUrl: 'https://theysaidso.com/img/qod/qod-funny.jpg',
 		category: 'funny',
