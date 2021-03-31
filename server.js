@@ -31,8 +31,21 @@ const validateTwilio = (req, res, next) => {
 	next();
 };
 
+const verifyMyself = (req, res, next) => {
+	const { secret } = req.query;
+	const mySecret = process.env.MY_SECRET;
+	if (secret && mySecret && secret === mySecret) {
+		return next();
+	}
+	res.sendFile('./public/index.html', { root: __dirname });
+};
+
 // routes
-app.get('/sms', async (req, res) => {
+app.get('/', (req, res) => {
+	res.send('<a href="/sms">SMS</a><br><a href="/call">CALL</a>');
+});
+
+app.get('/sms', verifyMyself, async (req, res) => {
 	const { to } = req.query;
 
 	const { message, imgUrl: mediaUrl } = await getSmsMessage();
@@ -41,7 +54,7 @@ app.get('/sms', async (req, res) => {
 	res.status(200).send('sms sent');
 });
 
-app.get('/call', (req, res) => {
+app.get('/call', verifyMyself, (req, res) => {
 	const { to } = req.query;
 	const fullUrl = req.protocol + '://' + req.get('host') + '/call';
 
@@ -56,7 +69,6 @@ app.post('/sms', validateTwilio, async (req, res) => {
 });
 
 app.post('/call', validateTwilio, async (req, res) => {
-	console.log('POST - /call');
 	const twimlVoice = (await createVoiceTwiml()).toString();
 	res.writeHead(200, { 'Content-Type': 'text/xml' });
 	res.end(twimlVoice);

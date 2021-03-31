@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Twilio Quotes</title>
+</head>
+
+<body>
+
+	<form>
+		<label for="secret">Enter your secret password</label>
+		<input type="password" id="secret">
+		<button>Let's Go</button>
+	</form>
+
+	<script>
+		document.querySelector('form').addEventListener('submit', e => {
+			e.preventDefault();
+
+			const secret = document.getElementById('secret').value;
+			window.location.search = `?secret=${secret}`;
+		});
+	</script>
+
+</body>
+
+</html>

@@ -19,8 +19,7 @@ const fetchJSON = options => {
 			res.on('end', () => {
 				data = JSON.parse(data);
 				if ('error' in data) return reject(data.error);
-				// console.log({ dataInFetchJSON: data });
-				resolve(JSON.parse(data));
+				resolve(data);
 			});
 		});
 
@@ -49,7 +48,6 @@ const genRandomCategory = async (getFromAllCategories = false) => {
 		availableCategories[
 			Math.floor(Math.random() * availableCategories.length)
 		];
-	// console.log({ ['category-genRandomCategory']: category });
 	return category;
 };
 
@@ -69,7 +67,7 @@ const getQuote = async (getFromAllCategories = false) => {
 		};
 
 		const data = await fetchJSON(options);
-		const { quote, background: imgUrl } = data.quotes;
+		const { quote, background: imgUrl } = data.contents.quotes[0];
 
 		result = { quote, imgUrl, category };
 	} catch (err) {
