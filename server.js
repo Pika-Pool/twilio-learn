@@ -11,7 +11,7 @@ const {
 	getSmsMessage,
 } = require('./utils/createTwiml');
 const sendSms = require('./twilio-utils/send_sms');
-// const makeCall = require('./twilio-utils/make_call');
+const makeCall = require('./twilio-utils/make_call');
 
 const app = express();
 
@@ -21,24 +21,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const validateTwilio = (req, res, next) => {
-	// twilioSignature, reqUrl, reqParams
-	const twilioSignature = req.get('X-Twilio-Signature');
-	const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-	const params = req.body;
-	console.log({
-		auth_token: process.env.TWILIO_AUTH_TOKEN,
-		twilioSignature,
-		fullUrl,
-		params,
-	});
-	if (
-		!twilioClient.validateRequest(
-			process.env.TWILIO_AUTH_TOKEN,
-			twilioSignature,
-			fullUrl,
-			params
-		)
-	) {
+	const auth_token = process.env.TWILIO_AUTH_TOKEN;
+	if (!twilioClient.validateExpressRequest(req, auth_token)) {
 		const err = new Error('Request not from twilio');
 		err.statusCode = 400;
 		next(err);
@@ -57,12 +41,12 @@ app.get('/sms', async (req, res) => {
 	res.status(200).send('sms sent');
 });
 
-// app.get('/call', (req, res) => {
-// 	const { to } = req.query;
+app.get('/call', (req, res) => {
+	const { to } = req.query;
 
-// 	makeCall({ url: '/call', to });
-// 	res.status(200).send('calling...');
-// });
+	makeCall({ url: '/call', to });
+	res.status(200).send('calling...');
+});
 
 app.post('/sms', validateTwilio, async (req, res) => {
 	const twimlSms = (await createSmsTwiml()).toString();
