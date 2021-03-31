@@ -33,7 +33,7 @@ const getSmsMessage = async () => {
 	const { quote, category, imgUrl, err } = await getQuote();
 	const message =
 		(err ? 'error in server.\n' : '') +
-		`Hi! Here's a ${category} quote for you, ${quote}.\nHere's an image to go with it: ${imgUrl}`;
+		`Hi! Here's a ${category} quote for you, ${quote}.\nHere's an image to go with it: `;
 
 	return { message, imgUrl };
 };
